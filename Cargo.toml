@@ -7,3 +7,4 @@ edition = "2024"
 serde = { version = "1.0", features = ["derive"] }
 toml = "1.0"
 bollard = "0.20"
+tokio = { version = "1", features = ["full"] }
