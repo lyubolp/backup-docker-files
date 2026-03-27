@@ -9,34 +9,7 @@ pub struct Label {
     pub enabled: bool,
     pub extraction_type: ExtractionType,
     pub online: bool,
-}
-
-impl Label {
-    pub fn new(enabled: bool, extraction_type: ExtractionType, online: bool) -> Self {
-        Self {
-            enabled,
-            extraction_type,
-            online,
-        }
-    }
-
-    pub fn from_labels(labels: &HashMap<String, String>) -> Self {
-        let enabled = labels.get("bdf.enable").map_or(false, |v| v == "true");
-        let extraction_type = match labels.get("bdf.extraction_type").map(|s| s.as_str()) {
-            Some("File") => ExtractionType::File,
-            Some("TinyDB") => ExtractionType::TinyDB,
-            Some("SQLite") => ExtractionType::SQLite,
-            Some("Pocketbase") => ExtractionType::Pocketbase,
-            _ => ExtractionType::File, // Default to File if not specified
-        };
-        let online = labels.get("bdf.online").map_or(false, |v| v == "true");
-
-        Self {
-            enabled,
-            extraction_type,
-            online,
-        }
-    }
+    pub other: Option<HashMap<String, String>>,
 }
 
 pub fn label_keys() -> HashMap<String, String> {
@@ -48,4 +21,67 @@ pub fn label_keys() -> HashMap<String, String> {
         ),
         ("online".to_string(), "bdf.online".to_string()),
     ])
+}
+
+impl Label {
+    pub fn new(
+        enabled: bool,
+        extraction_type: ExtractionType,
+        online: bool,
+        other: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self {
+            enabled,
+            extraction_type,
+            online,
+            other,
+        }
+    }
+
+    pub fn from_labels(labels: &HashMap<String, String>) -> Result<Self, String> {
+        if !Self::are_required_keys_present(labels) {
+            return Err("Missing required label keys".to_string());
+        }
+
+        let label_keys = label_keys();
+
+        let enabled = labels
+            .get(&label_keys["enable"])
+            .map_or(false, |v| v == "true");
+
+        let extraction_type = match labels
+            .get(&label_keys["extraction_type"])
+            .map(|s| s.as_str())
+        {
+            Some("File") => ExtractionType::File,
+            Some("TinyDB") => ExtractionType::TinyDB,
+            Some("SQLite") => ExtractionType::SQLite,
+            Some("Pocketbase") => ExtractionType::Pocketbase,
+            _ => ExtractionType::File, // Default to File if not specified
+        };
+
+        let online = labels
+            .get(&label_keys["online"])
+            .map_or(false, |v| v == "true");
+
+        let other = Some(
+            labels
+                .iter()
+                .filter(|(k, _)| !label_keys.values().any(|v| v == *k))
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect(),
+        );
+
+        Ok(Self {
+            enabled,
+            extraction_type,
+            online,
+            other
+        })
+    }
+
+    fn are_required_keys_present(labels: &HashMap<String, String>) -> bool {
+        let required_keys = label_keys();
+        required_keys.keys().all(|key| labels.contains_key(key))
+    }
 }
