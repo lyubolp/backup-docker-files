@@ -1,5 +1,6 @@
 pub mod file;
 pub mod sqlite;
+pub mod utils;
 
 use crate::models::container::Container;
 use crate::models::repo::Repository;
