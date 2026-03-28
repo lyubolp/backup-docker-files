@@ -7,4 +7,14 @@ edition = "2024"
 serde = { version = "1.0", features = ["derive"] }
 toml = "1.0"
 bollard = "0.20"
+tar = "0.4"
 tokio = { version = "1", features = ["full"] }
+futures-util = "0.3.32"
+
+
+[dependencies.uuid]
+version = "1.23.0"
+# Lets you generate random UUIDs
+features = [
+    "v7",
+]
