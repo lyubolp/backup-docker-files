@@ -1,8 +1,11 @@
+use super::utils::create_staging_dir;
+use crate::constants;
 use crate::models::container::Container;
 use crate::models::repo::Repository;
 use crate::services::discovery::get_docker_client;
 use crate::services::extraction::file::copy_file;
 
+use crate::constants;
 pub async fn extract(container: &Container, repository: &Repository) -> Result<(), String> {
     if let Ok(docker) = get_docker_client() {
         if container.labels.online {
@@ -17,10 +20,12 @@ pub async fn extract(container: &Container, repository: &Repository) -> Result<(
             }
         }
 
+        create_staging_dir()?;
+
+        let staging_path = format!("{}/{}", constants::STAGING_DIR, container.name);
+
         for path in container.labels.file_paths.iter() {
-            if let Err(e) =
-                copy_file(container, path, &format!("/tmp/backup/{}", path), &docker).await
-            {
+            if let Err(e) = copy_file(container, path, &staging_path, &docker).await {
                 return Err(format!("Failed to copy file {}: {}", path, e));
             }
         }
