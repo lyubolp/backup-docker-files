@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  cove:
+    image: cove:latest
+    container_name: cove
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    labels:
+      - "bdf.enable=true"
+      - "bdf.extraction_type=SQLite"
+      - "bdf.online=true"
+      - "bdf.file_path=database.db"
