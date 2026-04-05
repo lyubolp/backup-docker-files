@@ -1,4 +1,7 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Backup {
@@ -6,25 +9,23 @@ pub struct Backup {
     created_at: u64,
     contents: Vec<String>,
     size: u64,
-    repository: u32,
+    root: String,
 }
 
 impl Backup {
-    pub fn new(
-        id: String,
-        created_at: u64,
-        contents: Vec<String>,
-        size: u64,
-        repository: u32,
-    ) -> Self {
+    pub fn new(root: String) -> Self {
         Backup {
-            id,
-            created_at,
-            contents,
-            size,
-            repository,
+            id: Uuid::now_v7().to_string(),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("Time went backwards")
+                .as_secs(),
+            contents: vec![],
+            size: 0,
+            root,
         }
     }
+
     pub fn id(&self) -> &String {
         &self.id
     }
@@ -40,7 +41,7 @@ impl Backup {
         self.size
     }
 
-    pub fn repository(&self) -> u32 {
-        self.repository
+    pub fn root(&self) -> &String {
+        &self.root
     }
 }
