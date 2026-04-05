@@ -92,6 +92,6 @@ impl Labels {
 
     fn are_required_keys_present(labels: &HashMap<String, String>) -> bool {
         let required_keys = label_keys();
-        required_keys.keys().all(|key| labels.contains_key(key))
+        required_keys.values().all(|key| labels.contains_key(key))
     }
 }
