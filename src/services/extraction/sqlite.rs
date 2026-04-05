@@ -5,7 +5,7 @@ use crate::models::repo::Repository;
 use crate::services::discovery::get_docker_client;
 use crate::services::extraction::file::copy_file;
 
-use crate::constants;
+
 pub async fn extract(container: &Container, repository: &Repository) -> Result<(), String> {
     if let Ok(docker) = get_docker_client() {
         if container.labels.online {
@@ -20,7 +20,9 @@ pub async fn extract(container: &Container, repository: &Repository) -> Result<(
             }
         }
 
-        create_staging_dir()?;
+        let staging_result = create_staging_dir();
+
+        println!("Staging result: {:?}", staging_result);
 
         let staging_path = format!("{}/{}", constants::STAGING_DIR, container.name);
 
