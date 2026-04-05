@@ -8,15 +8,16 @@ use crate::{
     services::extraction::sqlite::extract,
 };
 
+use std::fs;
+
 #[tokio::main]
 async fn main() {
     let docker_client = get_docker_client().unwrap();
     let containers = collect_containers_to_backup(&docker_client).await;
     println!("Containers to backup: {:?}", containers);
 
-    let repo = load_repository("temp_repo").unwrap();
-
-    let extract_result = extract(&containers[0], &repo).await;
-
-    println!("Extract result: {:?}", extract_result);
+    for entry in fs::read_dir(".").unwrap() {
+        let entry = entry.unwrap();
+        println!("Found file: {}", entry.path().display());
+    }
 }
