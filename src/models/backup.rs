@@ -10,6 +10,7 @@ pub struct Backup {
     contents: Vec<String>,
     size: u64,
     root: String,
+    is_completed: bool,
 }
 
 impl Backup {
@@ -23,6 +24,7 @@ impl Backup {
             contents: vec![],
             size: 0,
             root,
+            is_completed: false,
         }
     }
 
@@ -43,5 +45,13 @@ impl Backup {
 
     pub fn root(&self) -> &String {
         &self.root
+    }
+
+    pub fn is_completed(&self) -> bool {
+        self.is_completed
+    }
+
+    pub fn complete(&mut self) {
+        self.is_completed = true;
     }
 }
