@@ -25,9 +25,11 @@ pub async fn collect_containers_to_backup(connection: &Docker) -> Vec<Container>
                 container.labels.and_then(|labels| {
                     if label_keys.iter().all(|(_, key)| labels.contains_key(key)) {
                         let label = Labels::from_labels(&labels);
+                        let name = container.names.unwrap()[0].clone();
+                        let name = name.strip_prefix('/').unwrap_or(&name).to_string();
                         Some(Container::new(
                             container.id.unwrap(),
-                            container.names.unwrap()[0].clone(),
+                            name,
                             label.unwrap(),
                         ))
                     } else {
