@@ -7,9 +7,9 @@ use crate::models::container::Container;
 use crate::models::repo::Repository;
 use crate::services::discovery::get_docker_client;
 
-pub async fn extract(container: &Container, repository: &Repository) -> Result<(), String> {
+pub async fn extract(container: &Container) -> Result<String, String> {
     if let Ok(docker) = get_docker_client() {
-        Ok(())
+        unimplemented!("Not implemented")
     } else {
         Err("Failed to connect to Docker".to_string())
     }
