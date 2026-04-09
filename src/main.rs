@@ -3,12 +3,11 @@ mod models;
 mod services;
 
 use crate::{
+    models::backup::Backup,
     models::repo::{self, Repository, load_repository, save_repository},
+    services::backup::create_backup,
     services::discovery::{collect_containers_to_backup, get_docker_client},
-    services::extraction::sqlite::extract,
 };
-
-use std::fs;
 
 #[tokio::main]
 async fn main() {
@@ -16,8 +15,9 @@ async fn main() {
     let containers = collect_containers_to_backup(&docker_client).await;
     println!("Containers to backup: {:?}", containers);
 
-    for entry in fs::read_dir(".").unwrap() {
-        let entry = entry.unwrap();
-        println!("Found file: {}", entry.path().display());
-    }
+    let mut backup = Backup::new("temp_backup".to_string());
+
+    let result = create_backup(&mut backup, &containers).await;
+
+    println!("Backup result: {:?}", result);
 }
