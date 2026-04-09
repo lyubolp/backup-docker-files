@@ -51,7 +51,9 @@ impl Backup {
         self.is_completed
     }
 
-    pub fn complete(&mut self) {
+    pub fn complete(&mut self, contents: Vec<String>, size: u64) {
+        self.contents = contents;
+        self.size = size;
         self.is_completed = true;
     }
 }
