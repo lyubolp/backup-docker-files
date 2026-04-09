@@ -10,4 +10,16 @@ services:
       - "bdf.enable=true"
       - "bdf.extraction_type=SQLite"
       - "bdf.online=true"
-      - "bdf.file_path=database.db"
+      - "bdf.file_path=/app/database.db"
+
+  weight-tracker:
+    image: weight-tracker:latest
+    container_name: weight-tracker
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    labels:
+      - "bdf.enable=true"
+      - "bdf.extraction_type=file"
+      - "bdf.online=true"
+      - "bdf.file_path=/app/db.json"
