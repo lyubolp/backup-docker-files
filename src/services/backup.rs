@@ -4,11 +4,24 @@ use crate::models::{
     extraction::ExtractionType,
 };
 use crate::services::extraction;
+use crate::services::extraction::utils::walk_dir;
 use std::fs;
 
 use fs_extra::dir::{CopyOptions, copy};
 
-pub fn init_backup(backup: &Backup) -> Result<(), String> {
+pub async fn create_backup(backup: &mut Backup, containers: &Vec<Container>) -> Result<(), String> {
+    init_backup(backup)?;
+
+    for container in containers {
+        backup_container(backup, container).await?;
+    }
+
+    complete_backup(backup);
+
+    Ok(())
+}
+
+fn init_backup(backup: &Backup) -> Result<(), String> {
     let root_dir = backup.root();
 
     let root_dir_result = fs::create_dir_all(root_dir);
@@ -23,7 +36,7 @@ pub fn init_backup(backup: &Backup) -> Result<(), String> {
     Ok(())
 }
 
-pub async fn backup_container(backup: &Backup, container: &Container) -> Result<(), String> {
+async fn backup_container(backup: &Backup, container: &Container) -> Result<(), String> {
     let backup_status = match container.labels.extraction_type {
         ExtractionType::File => extraction::file::extract(container).await,
         ExtractionType::Pocketbase => unimplemented!("Pocketbase extraction not implemented"),
@@ -35,6 +48,7 @@ pub async fn backup_container(backup: &Backup, container: &Container) -> Result<
         Ok(staging_dir) => {
             let target_dir = create_dir_for_container(backup.root(), &container.name);
 
+            println!("Staging dir: {}, Target dir: {:?}", staging_dir, target_dir);
             match target_dir {
                 Ok(dir) => copy_from_staging(&staging_dir, &dir),
                 Err(e) => Err(e),
@@ -44,12 +58,16 @@ pub async fn backup_container(backup: &Backup, container: &Container) -> Result<
     }
 }
 
-pub fn complete_backup(backup: &mut Backup) {
-    backup.complete();
+fn complete_backup(backup: &mut Backup) {
+    let contents = gather_contents(backup);
+    let total_size: u64 = contents.iter().map(|path| get_size_of_content(path)).sum();
+
+    backup.complete(contents, total_size);
 }
 
 fn copy_from_staging(staging_dir: &String, target_dir: &String) -> Result<(), String> {
-    let options = CopyOptions::new();
+    let options = CopyOptions::new().content_only(true);
+
     copy(staging_dir, target_dir, &options)
         .map_err(|e| format!("Failed to copy from staging to target: {}", e))
         .and(Ok(()))
@@ -63,9 +81,10 @@ fn create_dir_for_container(root_dir: &String, container_name: &String) -> Resul
         .and(Ok(full_path))
 }
 
-fn gather_contents(backup: &Backup) -> Vec<(String, usize)> {
-    // Implement logic to gather contents of the backup if needed
+fn gather_contents(backup: &Backup) -> Vec<String> {
+    walk_dir(backup.root())
+}
 
-    for entry in fs::read_dir(backup.root()) {}
-    vec![]
+fn get_size_of_content(path: &String) -> u64 {
+    fs::metadata(path).map_or_else(|_| 0, |metadata| metadata.len())
 }
