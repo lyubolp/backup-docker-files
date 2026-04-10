@@ -76,7 +76,7 @@ impl Labels {
         let other = Some(
             labels
                 .iter()
-                .filter(|(k, _)| !label_keys.values().any(|v| v == *k))
+                .filter(|(k, _)| k.starts_with("bdf") && !label_keys.values().any(|v| v == *k))
                 .map(|(k, v)| (k.clone(), v.clone()))
                 .collect(),
         );
@@ -93,5 +93,46 @@ impl Labels {
     fn are_required_keys_present(labels: &HashMap<String, String>) -> bool {
         let required_keys = label_keys();
         required_keys.values().all(|key| labels.contains_key(key))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_single_file_path() {
+        let expected_file_path = "/data/file1.txt".to_string();
+        let mut labels_map = HashMap::new();
+        labels_map.insert("bdf.enable".to_string(), "true".to_string());
+        labels_map.insert("bdf.extraction_type".to_string(), "File".to_string());
+        labels_map.insert("bdf.online".to_string(), "false".to_string());
+        labels_map.insert("bdf.file_path".to_string(), expected_file_path.clone());
+
+        let labels = Labels::from_labels(&labels_map).unwrap();
+
+        assert_eq!(labels.file_paths, vec![expected_file_path]);
+    }
+
+    #[test]
+    fn test_multiple_file_paths() {
+        let expected_file_paths =
+            vec!["/data/file1.txt".to_string(), "/data/file2.txt".to_string()];
+        let mut labels_map = HashMap::new();
+        labels_map.insert("bdf.enable".to_string(), "true".to_string());
+        labels_map.insert("bdf.extraction_type".to_string(), "File".to_string());
+        labels_map.insert("bdf.online".to_string(), "false".to_string());
+        labels_map.insert(
+            "bdf.file_path.0".to_string(),
+            expected_file_paths[0].clone(),
+        );
+        labels_map.insert(
+            "bdf.file_path.1".to_string(),
+            expected_file_paths[1].clone(),
+        );
+
+        let labels = Labels::from_labels(&labels_map).unwrap();
+
+        assert_eq!(labels.file_paths, expected_file_paths);
     }
 }
