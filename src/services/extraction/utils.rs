@@ -26,3 +26,43 @@ pub fn walk_dir(root: &String) -> Vec<String> {
 
     result
 }
+
+pub fn is_path_glob(path: &str) -> bool {
+    let glob_characters = ["*", "?", "[", "{"];
+
+    glob_characters
+        .iter()
+        .any(|&glob_char| path.contains(glob_char))
+}
+
+pub fn get_base_from_glob(pattern: &str) -> String {
+    pattern
+        .split("/")
+        .map(|piece| {
+            if !is_path_glob(&piece) {
+                Some(piece.to_string())
+            } else {
+                None
+            }
+        })
+        .fuse()
+        .flatten()
+        .collect::<Vec<_>>()
+        .join("/")
+        .to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_base_from_glob_no_glob() {
+        let pattern = "/foo/bar";
+        let expected = "/foo/bar".to_string();
+
+        let actual = get_base_from_glob(&pattern);
+
+        assert_eq!(actual, expected);
+    }
+}
