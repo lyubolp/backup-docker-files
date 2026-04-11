@@ -4,7 +4,7 @@ use crate::models::{
     extraction::ExtractionType,
 };
 use crate::services::extraction;
-use crate::services::extraction::utils::walk_dir;
+use crate::services::extraction::utils::{create_staging_dir, remove_staging_dir, walk_dir};
 use std::fs;
 
 use fs_extra::dir::{CopyOptions, copy};
@@ -12,12 +12,16 @@ use fs_extra::dir::{CopyOptions, copy};
 pub async fn create_backup(backup: &mut Backup, containers: &Vec<Container>) -> Result<(), String> {
     init_backup(backup)?;
 
+    create_staging_dir()?;
     for container in containers {
-        backup_container(backup, container).await?;
+        if container.labels.enabled {
+            backup_container(backup, container).await?;
+        }
     }
 
     complete_backup(backup);
 
+    remove_staging_dir()?;
     Ok(())
 }
 
@@ -48,7 +52,6 @@ async fn backup_container(backup: &Backup, container: &Container) -> Result<(), 
         Ok(staging_dir) => {
             let target_dir = create_dir_for_container(backup.root(), &container.name);
 
-            println!("Staging dir: {}, Target dir: {:?}", staging_dir, target_dir);
             match target_dir {
                 Ok(dir) => copy_from_staging(&staging_dir, &dir),
                 Err(e) => Err(e),
