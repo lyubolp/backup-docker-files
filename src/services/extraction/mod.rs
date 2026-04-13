@@ -1,10 +1,15 @@
+use crate::models::container::Container;
+
 pub mod file;
+pub mod pocketbase;
 pub mod sqlite;
 pub mod utils;
 
-use crate::models::container::Container;
-use crate::models::repo::Repository;
-
-trait Extractor {
-    fn extract(&self, container: &Container, repository: &Repository) -> Result<(), String>;
+pub(crate) trait Extractor {
+    async fn extract(container: &Container) -> Result<String, String>;
 }
+
+pub async fn extract(container: &Container) -> Result<String, String> {
+    unimplemented!()
+}
+// pub fn
