@@ -56,10 +56,10 @@ impl Labels {
             .get(&label_keys["extraction_type"])
             .map(|s| s.as_str())
         {
-            Some("File") => ExtractionType::File,
-            Some("TinyDB") => ExtractionType::TinyDB,
-            Some("SQLite") => ExtractionType::SQLite,
-            Some("Pocketbase") => ExtractionType::Pocketbase,
+            Some("file") => ExtractionType::File,
+            Some("tinydb") => ExtractionType::TinyDB,
+            Some("sqlite") => ExtractionType::SQLite,
+            Some("pocketbase") => ExtractionType::Pocketbase,
             _ => ExtractionType::File, // Default to File if not specified
         };
 
