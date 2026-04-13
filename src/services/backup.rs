@@ -1,8 +1,4 @@
-use crate::models::{
-    backup::{self, Backup},
-    container::Container,
-    extraction::ExtractionType,
-};
+use crate::models::{backup::Backup, container::Container};
 use crate::services::extraction;
 use crate::services::extraction::utils::{create_staging_dir, remove_staging_dir, walk_dir};
 use std::fs;

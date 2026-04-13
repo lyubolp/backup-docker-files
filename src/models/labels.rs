@@ -1,5 +1,3 @@
-use serde::de;
-
 use crate::models::extraction::ExtractionType;
 
 use std::collections::HashMap;
