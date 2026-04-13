@@ -25,4 +25,7 @@ target
 
 /target
 
+# Development testing artifacts
 temp_repo
+temp_backup
+pocketbase-demo
