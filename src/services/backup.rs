@@ -41,12 +41,7 @@ fn init_backup(backup: &Backup) -> Result<(), String> {
 }
 
 async fn backup_container(backup: &Backup, container: &Container) -> Result<(), String> {
-    let backup_status = match container.labels.extraction_type {
-        ExtractionType::File => extraction::file::extract(container).await,
-        ExtractionType::Pocketbase => unimplemented!("Pocketbase extraction not implemented"),
-        ExtractionType::SQLite => extraction::sqlite::extract(container).await,
-        ExtractionType::TinyDB => unimplemented!("TinyDB extraction not implemented"),
-    };
+    let backup_status = extraction::extract(container).await;
 
     match backup_status {
         Ok(staging_dir) => {
