@@ -29,8 +29,11 @@ services:
     container_name: pocketbase-demo
     restart: unless-stopped
     ports:
-    - "8090:8090"
+    - "8080:8080"
     labels:
       - "bdf.enable=true"
       - "bdf.extraction_type=pocketbase"
-      - "bdf.online=true"
+      - "bdf.online=false"
+      - "bdf.pocketbase.url=http://0.0.0.0:8080/api"
+      - "bdf.pocketbase.username=<email>"
+      - "bdf.pocketbase.password=<pocketbase_password>"  # This is bad practice
