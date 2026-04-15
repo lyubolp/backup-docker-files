@@ -74,8 +74,14 @@ impl Labels {
         let other = Some(
             labels
                 .iter()
-                .filter(|(k, _)| k.starts_with("bdf") && !label_keys.values().any(|v| v == *k))
-                .map(|(k, v)| (k.clone(), v.clone()))
+                .filter(|(k, _)| k.starts_with("bdf.") && !label_keys.values().any(|v| v == *k))
+                .filter(|(k, _)| !k.starts_with("bdf.file_path"))
+                .map(|(k, v)| {
+                    (
+                        k.clone().strip_prefix("bdf.").unwrap().to_string(),
+                        v.clone(),
+                    )
+                })
                 .collect(),
         );
 
