@@ -1,3 +1,8 @@
+use super::Extractor;
+use super::utils::{get_base_from_glob, is_path_glob};
+use crate::constants;
+use crate::models::container::Container;
+use crate::services::discovery::get_docker_client;
 use bollard::Docker;
 use bollard::query_parameters::DownloadFromContainerOptionsBuilder;
 use futures_util::StreamExt;
@@ -6,72 +11,63 @@ use std::io::Cursor;
 use std::path;
 use tar::Archive;
 
-use super::utils::{get_base_from_glob, is_path_glob};
-use crate::constants;
-use crate::models::container::Container;
-use crate::services::discovery::get_docker_client;
-
-use super::Extractor;
-
 pub(crate) struct FileExtractor;
 
 impl Extractor for FileExtractor {
     async fn extract(container: &Container) -> Result<String, String> {
-        if let Ok(docker) = get_docker_client() {
-            if container.labels.online {
-                let pause_result = docker.pause_container(&container.name).await;
+        let docker = get_docker_client()?;
 
-                if pause_result.is_err() {
-                    return Err(format!(
-                        "Failed to pause container {}: {}",
-                        container.name,
-                        pause_result.err().unwrap()
-                    ));
-                }
+        if container.labels.online {
+            let pause_result = docker.pause_container(&container.name).await;
+
+            if pause_result.is_err() {
+                return Err(format!(
+                    "Failed to pause container {}: {}",
+                    container.name,
+                    pause_result.err().unwrap()
+                ));
             }
+        }
 
-            let staging_path = format!("{}/{}", constants::STAGING_DIR, container.name);
+        let staging_path = format!("{}/{}", constants::STAGING_DIR, container.name);
 
-            let mut errors: Vec<String> = vec![];
-            for path in container.labels.file_paths.iter() {
-                if is_path_glob(path) {
-                    let glob_root = get_base_from_glob(path);
-                    let matches =
-                        expand_glob_in_container(path, &glob_root, container, &docker).await?;
+        let mut errors: Vec<String> = vec![];
+        for path in container.labels.file_paths.iter() {
+            if is_path_glob(path) {
+                let glob_root = get_base_from_glob(path);
+                let matches =
+                    expand_glob_in_container(path, &glob_root, container, &docker).await?;
 
-                    for matched_path in matches {
-                        if let Err(e) =
-                            copy_file(container, &matched_path, &staging_path, &docker).await
-                        {
-                            errors.push(format!("Failed to copy file {}: {}", matched_path, e));
-                        }
-                    }
-                } else {
-                    if let Err(e) = copy_file(container, path, &staging_path, &docker).await {
-                        errors.push(format!("Failed to copy file {}: {}", path, e));
+                for matched_path in matches {
+                    if let Err(e) =
+                        copy_file(container, &matched_path, &staging_path, &docker).await
+                    {
+                        errors.push(format!("Failed to copy file {}: {}", matched_path, e));
                     }
                 }
-            }
-
-            if container.labels.online {
-                let unpause_result = docker.unpause_container(&container.name).await;
-
-                if unpause_result.is_err() {
-                    return Err(format!(
-                        "Failed to unpause container {}: {}",
-                        container.name,
-                        unpause_result.err().unwrap()
-                    ));
-                }
-            }
-
-            if errors.len() == 0 {
-                Ok(staging_path)
             } else {
-                Err(errors.join("; "))
+                if let Err(e) = copy_file(container, path, &staging_path, &docker).await {
+                    errors.push(format!("Failed to copy file {}: {}", path, e));
+                }
             }
+        }
+
+        if container.labels.online {
+            let unpause_result = docker.unpause_container(&container.name).await;
+
+            if unpause_result.is_err() {
+                return Err(format!(
+                    "Failed to unpause container {}: {}",
+                    container.name,
+                    unpause_result.err().unwrap()
+                ));
+            }
+        }
+
+        if errors.len() == 0 {
+            Ok(staging_path)
         } else {
-            Err("Failed to connect to Docker".to_string())
+            Err(errors.join("; "))
         }
     }
 }
