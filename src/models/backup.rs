@@ -14,16 +14,17 @@ pub struct Backup {
 }
 
 impl Backup {
-    pub fn new(root: String) -> Self {
+    pub fn new(repo_root: String) -> Self {
+        let id = Uuid::now_v7().to_string();
         Backup {
-            id: Uuid::now_v7().to_string(),
+            id: id.clone(),
             created_at: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("Time went backwards")
                 .as_secs(),
             contents: vec![],
             size: 0,
-            root,
+            root: format!("{}/{}", repo_root, id),
             is_completed: false,
         }
     }
