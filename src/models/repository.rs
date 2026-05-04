@@ -53,16 +53,16 @@ impl Repository {
         self.rotation_limit
     }
 
-    pub fn new_backup(&self) -> Backup {
-        if self.backups.len() >= self.rotation_limit {
-            unimplemented!("Rotation logic not implemented yet");
-        }
-
-        unimplemented!("Backup creation logic not implemented yet");
+    pub fn backups(&self) -> &Vec<Backup> {
+        &self.backups
     }
 
-    fn rotate(&self) {
-        unimplemented!("Rotation logic not implemented yet");
+    pub fn backups_mut(&mut self) -> &mut Vec<Backup> {
+        &mut self.backups
+    }
+
+    pub fn add_backup(&mut self, backup: Backup) {
+        self.backups.push(backup);
     }
 }
 
