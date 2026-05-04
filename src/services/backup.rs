@@ -1,9 +1,9 @@
 use crate::models::{backup::Backup, container::Container};
 use crate::services::extraction;
 use crate::services::extraction::utils::{create_staging_dir, remove_staging_dir, walk_dir};
-use std::fs;
-
 use fs_extra::dir::{CopyOptions, copy};
+use std::fs;
+use toml;
 
 pub async fn create_backup(backup: &mut Backup, containers: &Vec<Container>) -> Result<(), String> {
     init_backup(backup)?;
@@ -52,11 +52,18 @@ async fn backup_container(backup: &Backup, container: &Container) -> Result<(), 
     }
 }
 
-fn complete_backup(backup: &mut Backup) {
+fn complete_backup(backup: &mut Backup) -> Result<(), String> {
     let contents = gather_contents(backup);
     let total_size: u64 = contents.iter().map(|path| get_size_of_content(path)).sum();
 
     backup.complete(contents, total_size);
+
+    let content = toml::to_string(backup).map_err(|_| "Failed to serialize".to_string())?;
+
+    let metadata_path = format!("{}/{}.toml", backup.root(), backup.id());
+
+    fs::write(&metadata_path, content)
+        .map_err(|e| format!("Failed to write backup metadata: {}", e))
 }
 
 fn copy_from_staging(staging_dir: &String, target_dir: &String) -> Result<(), String> {
@@ -81,4 +88,9 @@ fn gather_contents(backup: &Backup) -> Vec<String> {
 
 fn get_size_of_content(path: &String) -> u64 {
     fs::metadata(path).map_or_else(|_| 0, |metadata| metadata.len())
+}
+
+pub fn remove_backup(backup: &Backup) -> Result<(), String> {
+    fs::remove_dir_all(backup.root())
+        .map_err(|e| format!("Failed to remove backup directory: {}", e))
 }
